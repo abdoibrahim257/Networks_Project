@@ -23,6 +23,9 @@
 using namespace std;
 Define_Module(Node);
 
+//vars
+bool sender=false;
+
 void Node::initialize()
 {
     // TODO - Generated method body
@@ -30,5 +33,45 @@ void Node::initialize()
 
 void Node::handleMessage(cMessage *msg)
 {
-    // TODO - Generated method body
+    if(msg->isSelfMessage())
+    {
+        //protocol send fn
+        EV<<"et2akhart?";
+    }
+    else
+    {
+        cGate *arrivalGate=msg->getArrivalGate();
+        if(arrivalGate==gate("in",0))
+        {
+            sender=true;
+            EV<<"i am sender "<<sender<<endl;
+            string line(msg->getName());
+            string startTime;
+            for(int i=3;i<line.size();i++)
+            {
+                if(line[i]==']')
+                {
+                    break;
+                }
+                startTime+=line[i];
+            }
+            EV<<"my start time= "<<stol(startTime)<<endl;
+            int startT=stol(startTime);
+            scheduleAt(simTime()+startT,new cMessage(""));
+        }
+        else
+        {
+            if(sender)
+            {
+                //check ack
+                //protocol send fn
+            }
+            else
+            {
+                //receiver
+                //check expected frame
+                //send ack/ nack
+            }
+        }
+    }
 }

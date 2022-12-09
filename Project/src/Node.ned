@@ -19,8 +19,17 @@ package project;
 //
 // TODO auto-generated module
 //
+
 simple Node
 {
+    parameters:
+        int WS;
+        int TO;
+        double PT;
+        double TD;
+        double ED;
+        double DD;
+        double LP;
     gates:
         input in[2];
         output out;

@@ -14,11 +14,49 @@
 // 
 
 #include "Coordinator.h"
+#include <fstream>
+#include <string>
+#include <bitset>
+#include <vector>
+#include <iostream>
+#include <cstdlib>
+using namespace std;
+
 
 Define_Module(Coordinator);
 
 void Coordinator::initialize()
 {
+    string line;
+      ifstream myfile ("D:/CUFE/Fall 2022/Networks/project/Networks_Project/Project/coordinator.txt");
+      if (myfile.is_open())
+      {
+        while(getline (myfile,line))
+        {
+            EV<<line<<endl;
+        }
+        myfile.close();
+        if(line[1]=='0')
+        {
+            string start = to_string(line[3]);
+            cMessage* msg  = new cMessage(line.c_str());
+            send (msg,"out",0);
+        }
+        else if((line[1]=='1'))
+        {
+            string start = to_string(line[3]);
+            cMessage* msg  = new cMessage(line.c_str());
+            send (msg,"out",1);
+        }
+
+
+
+
+
+      }
+
+      else EV << "Unable to open file";
+
     //read from file
     //check which node and start timer
     //assign variable node1 or 2

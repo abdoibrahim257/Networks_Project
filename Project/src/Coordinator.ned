@@ -21,6 +21,6 @@ package project;
 simple Coordinator
 {
     gates:
-        input in[2];
+       
         output out[2];
 }
