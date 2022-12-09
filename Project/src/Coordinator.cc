@@ -27,8 +27,8 @@ Define_Module(Coordinator);
 
 void Coordinator::initialize()
 {
-    string line;
-      ifstream myfile ("D:/CUFE/Fall 2022/Networks/project/Networks_Project/Project/coordinator.txt");
+      string line;
+      ifstream myfile ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\coordinator.txt");
       if (myfile.is_open())
       {
         while(getline (myfile,line))
@@ -48,11 +48,6 @@ void Coordinator::initialize()
             cMessage* msg  = new cMessage(line.c_str());
             send (msg,"out",1);
         }
-
-
-
-
-
       }
 
       else EV << "Unable to open file";

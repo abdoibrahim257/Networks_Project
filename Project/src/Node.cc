@@ -15,6 +15,7 @@
 
 #include "Node.h"
 #include "MyMessage_m.h"
+#include <fstream>
 #include <string>
 #include <bitset>
 #include <vector>
@@ -33,10 +34,78 @@ void Node::initialize()
 
 void Node::handleMessage(cMessage *msg)
 {
+    string error, Msg;
     if(msg->isSelfMessage())
     {
-        //protocol send fn
-        EV<<"et2akhart?";
+        string a(msg->getName());
+        if(a=="1")
+        {
+            string line;
+            ifstream myfile ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+            if (myfile.is_open())
+            {
+                getline (myfile,line);
+                EV<<line<<endl;
+                for(int i = 0; i < 5; i++)
+                {
+                    error+=line[i];
+                }
+
+                for(int i = 5; i < line.size(); i++)
+                {
+                    Msg+=line[i];
+                }
+                EV << "Error Code: " << error<<endl;
+                EV << "Message: " << Msg <<endl;
+
+                //check which error code-
+                //perform framming here
+                //Add processing Delay
+
+                cMessage* msg2  = new cMessage(Msg.c_str());
+                send (msg2,"out");
+
+                error = "";
+                Msg = "";
+            }
+            myfile.close();
+        }
+        else
+        {
+            string line;
+            ifstream myfile ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+            if (myfile.is_open())
+            {
+                getline (myfile,line);
+                while(getline (myfile,line))
+                {
+                    EV<<line<<endl;
+                    for(int i = 0; i < 5; i++)
+                    {
+                        error+=line[i];
+                    }
+
+                    for(int i = 5; i < line.size(); i++)
+                    {
+                        Msg+=line[i];
+                    }
+                    EV << "Error Code: " << error<<endl;
+                    EV << "Message: " << Msg <<endl;
+
+                    //check which error code-
+                    //perform framming here
+                    cMessage* msg2  = new cMessage(Msg.c_str());
+                    send (msg2,"out");
+
+                    error = "";
+                    Msg = "";
+
+                }
+                myfile.close();
+            }
+        //sender side
+        //wait for ack
+        }
     }
     else
     {
@@ -57,7 +126,7 @@ void Node::handleMessage(cMessage *msg)
             }
             EV<<"my start time= "<<stol(startTime)<<endl;
             int startT=stol(startTime);
-            scheduleAt(simTime()+startT,new cMessage(""));
+            scheduleAt(simTime()+startT,new cMessage("1"));
         }
         else
         {
@@ -75,3 +144,7 @@ void Node::handleMessage(cMessage *msg)
         }
     }
 }
+
+
+
+

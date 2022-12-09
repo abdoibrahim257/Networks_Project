@@ -17,7 +17,7 @@
 #define __PROJECT_NODE_H_
 
 #include <omnetpp.h>
-
+#include <string>
 using namespace omnetpp;
 
 /**
@@ -28,6 +28,8 @@ class Node : public cSimpleModule
   protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
+    void SendMsg();
+    void ReadMsgFromFile(std::string &error, std::string Msg);
 };
 
 #endif
