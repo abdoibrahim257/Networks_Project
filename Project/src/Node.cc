@@ -14,7 +14,13 @@
 // 
 
 #include "Node.h"
+#include "MyMessage_m.h"
+#include <string>
+#include <bitset>
+#include <vector>
+#include <iostream>
 
+using namespace std;
 Define_Module(Node);
 
 void Node::initialize()
