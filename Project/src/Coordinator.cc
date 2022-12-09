@@ -19,7 +19,10 @@ Define_Module(Coordinator);
 
 void Coordinator::initialize()
 {
-    // TODO - Generated method body
+    //read from file
+    //check which node and start timer
+    //assign variable node1 or 2
+    //send to whether each to be the sender with msg containing start time
 }
 
 void Coordinator::handleMessage(cMessage *msg)

@@ -4,6 +4,7 @@ package project;
 //
 // TODO documentation
 //
+
 network Network
 {
     @display("bgb=488,321");
@@ -18,11 +19,9 @@ network Network
             @display("p=205,193;i=block/cogwheel");
         }
     connections:
-        node.out[0] --> node1.in[0];
-        node1.out[0] --> node.in[0];
-        node.out[0] --> coordinator.in[0];
+        node.out --> node1.in[1];
+        node1.out --> node.in[1];
         coordinator.out[0] --> node.in[0];
-        coordinator.out[0] --> node1.in[0];
-        node1.out[0] --> coordinator.in[0];
+        coordinator.out[1] --> node1.in[0];
 }
 
