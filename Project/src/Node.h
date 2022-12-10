@@ -29,7 +29,7 @@ class Node : public cSimpleModule
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
     void SendMsg();
-    void ReadMsgFromFile(std::string &error, std::string Msg);
+    bool ReadMsgFromFile(std::string &error, std::string &Msg);
 };
 
 #endif
