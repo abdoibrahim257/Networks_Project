@@ -1,7 +1,7 @@
 //Self Message Code
 
 // Start ----> Send First Message at Start time
-// 2 ----> Insert Processing Time delay (both sender and receiver)
+// Process ----> Insert Processing Time delay
 
 #include "Node.h"
 #include "MyMessage_m.h"
@@ -22,9 +22,22 @@ ifstream myfile;
 string line2;
 string E, Msg;
 
+int MaxSeqNum;
+int Next_frame_to_send;
+int Ack_expected;
+int Frame_expected;
+vector<MyMessage_Base *> buffer;
+int nBuffered;
+int i;
+
 void Node::initialize()
 {
     // TODO - Generated method body
+    MaxSeqNum = par("WS").intValue()-1;
+    Next_frame_to_send = 0;
+    Ack_expected = 0;
+    Frame_expected = 0;
+    nBuffered = 0;
 }
 
 void Node::handleMessage(cMessage *msg)
@@ -37,23 +50,46 @@ void Node::handleMessage(cMessage *msg)
         string MuxCode(msg->getName());
         if(MuxCode == "Start")
         {
-            t = this->ReadMsgFromFile(E, Msg);
-            if(t)
+
+            //insert this clock on for loop until buffer is full or data is completed
+            if(nBuffered < par("WS").intValue())
             {
-                //Perform Framing
-                //and check error
-                MyMessage_Base* msg3 = new MyMessage_Base();
 
+                t = this->ReadMsgFromFile(E, Msg);
+                if(t)
+                {
+                    MyMessage_Base* msg3 = new MyMessage_Base("Process");
+                    //construct
 
+                    //send data
+                    msg3->setPayload(Msg.c_str());
+                    msg3->setFrame_type(0);
 
+                    nBuffered++;
+                    EV<<"nBuffered: " << nBuffered<<endl;
+                    buffer.push_back(msg3);
 
-                msg3->setPayload(Msg.c_str());
-                msg3->setFrame_type(0);
-                send (msg3,"out");
+                    //send (msg3,"out");
+                    scheduleAt(simTime() + par("PT").doubleValue(), msg3);
+                    if(nBuffered < par("WS").intValue())
+                    {
+                        scheduleAt(simTime()+ par("PT").doubleValue(), new cMessage("Start"));
+                    }
+                    //time delay part
+                    Msg = "";
+                    E = "";
 
+                }
+                else
+                {
+                    EV << "No More Message/s "<<endl;
+                }
             }
-            else
-                EV << "No More Message/s "<<endl;
+        }
+        else if(MuxCode == "Process")
+        {
+            sendDelayed(msg, par("TD").doubleValue(), "out");
+
         }
     }
     else
@@ -86,8 +122,6 @@ void Node::handleMessage(cMessage *msg)
 
             int startT=stol(startTime);
             scheduleAt(simTime()+startT,new cMessage("Start"));
-
-
         }
         else
         {
@@ -96,16 +130,16 @@ void Node::handleMessage(cMessage *msg)
             {
                 //check ack
                 //protocol send fn
-                EV<<"Check timeout" << endl;
-                MyMessage_Base* msg3 = new MyMessage_Base();
-                E = "";
-                Msg = "";
-                t = this->ReadMsgFromFile(E, Msg);
-                msg3->setPayload(Msg.c_str());
-                msg3->setFrame_type(0);
-                send (msg3,"out");
+//                EV<<"Check timeout" << endl;
+//                MyMessage_Base* msg3 = new MyMessage_Base();
+//                E = "";
+//                Msg = "";
+//                t = this->ReadMsgFromFile(E, Msg);
+//                msg3->setPayload(Msg.c_str());
+//                msg3->setFrame_type(0);
+//                send (msg3,"out");
             }
-            else
+            else if(mmsg->getFrame_type() == 0)
             {
                 //receiver
                 //check expected frame
@@ -160,6 +194,11 @@ bool Node::ReadMsgFromFile(string &error2, string &Msg2)
         EV <<"file didnt Open" <<endl;
         return false;
     }
+}
+
+void Node::SendMsg()
+{
+
 }
 
 
