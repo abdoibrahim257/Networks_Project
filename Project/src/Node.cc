@@ -30,6 +30,22 @@ vector<MyMessage_Base *> buffer;
 int nBuffered;
 int i;
 
+vector<char> Framing(string Msg)
+{
+    vector<char> Framed_Msg;
+    Framed_Msg.push_back('$');
+    for (int  i=0;i<Msg.size();i++)
+    {
+        if (Msg[i]== '/' || Msg[i]=='$')
+        {
+            Framed_Msg.push_back('/');
+        }
+        Framed_Msg.push_back(Msg[i]);
+    }
+    Framed_Msg.push_back('$');
+    return Framed_Msg;
+}
+
 void Node::initialize()
 {
     // TODO - Generated method body
@@ -60,7 +76,11 @@ void Node::handleMessage(cMessage *msg)
                 {
                     MyMessage_Base* msg3 = new MyMessage_Base("Process");
                     //construct
-
+                    vector<char>Framed = Framing(Msg);
+                    for (int i=0;i<Framed.size();i++)
+                    {
+                        EV<<Framed[i]<<" ";
+                    }
                     //send data
                     msg3->setPayload(Msg.c_str());
                     msg3->setFrame_type(0);
@@ -113,11 +133,13 @@ void Node::handleMessage(cMessage *msg)
 
             if(line[1]=='1')
             {
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
+                //myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
             }
             else
             {
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
+                //myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
             }
 
             int startT=stol(startTime);
