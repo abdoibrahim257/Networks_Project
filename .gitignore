@@ -1,8 +1,8 @@
 /.metadata/
 
-*\.o
-*\Project.exe
+*/.o
+*/Project.exe
 *.o.d
-*.last-copts
-*.settings.xml
-*\out\*
+*/.last-copts
+*/.settings.xml
+*/out/
