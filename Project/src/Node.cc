@@ -2,7 +2,7 @@
 
 // Start ----> Send First Message at Start time
 // Transmission ----> Insert Transmission delay Time delay
-
+// StopTimer  ----> start timer for each message
 #include "Node.h"
 #include "MyMessage_m.h"
 #include <fstream>
@@ -26,7 +26,8 @@ int MaxSeqNum;
 int Next_frame_to_send;
 int Ack_expected;
 int Frame_expected;
-vector<MyMessage_Base *> buffer;
+//vector<MyMessage_Base *> buffer;
+queue<MyMessage_Base *> buffer;
 int nBuffered;
 int i;
 int AcceptedDelay;
@@ -34,12 +35,13 @@ int AcceptedDelay;
 void Node::initialize()
 {
     // TODO - Generated method body
-    MaxSeqNum = par("WS").intValue()-1;
+    MaxSeqNum = par("WS").intValue();
     Next_frame_to_send = 0;
     Ack_expected = 0;
     Frame_expected = 0;
     nBuffered = 0;
     AcceptedDelay = 3;
+    i;
 }
 
 void Node::handleMessage(cMessage *msg)
@@ -53,7 +55,7 @@ void Node::handleMessage(cMessage *msg)
         if(MuxCode == "Start")
         {
             //insert this clock on for loop until buffer is full or data is completed
-            if(nBuffered < par("WS").intValue())
+            if(nBuffered < MaxSeqNum)
             {
                 t = this->ReadMsgFromFile(E, Msg);
                 if(t)
@@ -64,18 +66,24 @@ void Node::handleMessage(cMessage *msg)
                     string FramedMsg = Framing(Msg);
                     msg3->setPayload(FramedMsg.c_str());
                     msg3->setHeaderSeq_num(Next_frame_to_send);
+                    msg3->setAck_Nack_num(Ack_expected);
                     msg3->setFrame_type(0);
-                    //parity
-                    //insert trailer
+                    this->calculateParity(msg3);
 
                     nBuffered++;
                     EV<<"nBuffered: " << nBuffered<<endl;
-                    buffer.push_back(msg3);
-
+                    buffer.push(msg3);
+                    inc(Next_frame_to_send, MaxSeqNum);
 
                     scheduleAt(simTime() + par("PT").doubleValue(), msg3);
-                    inc(Next_frame_to_send, MaxSeqNum);
-                    if(nBuffered < par("WS").intValue())
+
+                    MyMessage_Base* msg4 = new MyMessage_Base("StopTimer");
+                    msg4->setHeaderSeq_num(msg3->getHeaderSeq_num());
+
+                    //EV << "simTime: " << simTime();
+                    scheduleAt(simTime() + par("PT").doubleValue() + par("TO").doubleValue(), msg4); //send message to myself and check if message is in the queue and timesout
+
+                    if(nBuffered < MaxSeqNum)
                     {
                         scheduleAt(simTime()+ par("PT").doubleValue(), new cMessage("Start"));
                     }
@@ -92,6 +100,39 @@ void Node::handleMessage(cMessage *msg)
         else if(MuxCode == "Transmission")
         {
             sendDelayed(msg, par("TD").doubleValue(), "out");
+        }
+        else if(MuxCode == "StopTimer")
+        {
+            //end Time aka timeout
+            //check if msg is in the q if yes then timeout and retransmit
+            //else already sent and received the ack --->ignore
+
+            MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
+            EV<<"Timed out message " << mmsg->getHeaderSeq_num() << endl;
+
+            MyMessage_Base *Temp_mmsg = buffer.front();
+            EV << "First element in Buffer: " << Temp_mmsg->getHeaderSeq_num() << endl;
+            if(Temp_mmsg->getHeaderSeq_num() == mmsg->getHeaderSeq_num())
+            {
+                //timeout
+                Next_frame_to_send = Ack_expected;
+                for(i = 1 ; i <= nBuffered ; i++)
+                {
+
+                    MyMessage_Base* msg2be_Resent = new MyMessage_Base("Transmission");
+                    msg2be_Resent->setHeaderSeq_num(buffer.front()->getHeaderSeq_num());
+                    msg2be_Resent->setPayload(buffer.front()->getPayload());
+                    msg2be_Resent->setAck_Nack_num(buffer.front()->getAck_Nack_num());
+                    msg2be_Resent->setFrame_type(buffer.front()->getFrame_type());
+                    msg2be_Resent->setTrailer_parity(buffer.front()->getTrailer_parity());
+                    EV << "Retransmit: " << msg2be_Resent->getHeaderSeq_num() << endl;
+                    buffer.push(buffer.front());
+                    buffer.pop();
+                    scheduleAt(simTime() + i*par("PT").doubleValue(), msg2be_Resent); //====> ask? when retransmit do i need to add PT???
+                    inc(Next_frame_to_send, MaxSeqNum);
+                }
+                EV <<"End of frame: " << Next_frame_to_send << endl;
+            }
         }
     }
     else
@@ -117,11 +158,13 @@ void Node::handleMessage(cMessage *msg)
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
                 myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
             }
             else
             {
-//                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node0.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
             }
 
             int startT=stol(startTime);
@@ -132,29 +175,42 @@ void Node::handleMessage(cMessage *msg)
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             if(mmsg->getFrame_type() == 1 || mmsg->getFrame_type() == 2)
             {
-
+                EV<< "Advance Window NOW " << endl;
+                while(Between(Ack_expected, mmsg->getAck_Nack_num(), Next_frame_to_send))
+                    {
+                        nBuffered--;
+                        buffer.pop();
+                        inc(Ack_expected, MaxSeqNum);
+                    }
+                //advances the lower end and frees the buffer next is to send any message if there exist in file
+                EV << "Begining of the buffer: " << buffer.front()->getHeaderSeq_num() << endl;
             }
             else if(mmsg->getFrame_type() == 0)
             {
+                MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
                 //receiver
                 //check expected frame
                 //send ack/ nack
                 EV <<"Iam Rec" <<endl;
                 if(mmsg->getHeaderSeq_num() == Frame_expected)
                 {
-                    //check parity
-                    //if true send ack
-                    //inc frame expected
-                    //else Nack
-                    //dont inc frame expected
+                    bool correct = calculateParity(mmsg);
+                    if(correct)
+                    {
+                        //send ack
+                        msg3->setPayload("Ack");
+                        msg3->setFrame_type(1);
+                        inc(Frame_expected, MaxSeqNum);
+                    }
+                    else
+                    {
+                        //Nack
+                        msg3->setPayload("Nack");
+                        msg3->setFrame_type(2);
+                    }
                 }
-
-                MyMessage_Base* msg3 = new MyMessage_Base();
-
-
-                msg3->setPayload("ACK");
-                msg3->setFrame_type(1);
-                send (msg3,"out");
+                msg3->setAck_Nack_num(Frame_expected);
+                scheduleAt(simTime() + par("PT").doubleValue(), msg3);
             }
         }
     }
@@ -228,7 +284,7 @@ string Node::Framing(string Msg)
 
 void Node::inc(int &seq_num, int Max)
 {
-    (seq_num <=Max) ? seq_num++ : seq_num = 0;
+    (seq_num == Max) ? seq_num = 0 : seq_num++;
 }
 
 bool Node::Between(int seq_a, int seq_b, int seq_c)
@@ -239,6 +295,54 @@ bool Node::Between(int seq_a, int seq_b, int seq_c)
         return false;
 }
 
+bool Node::isContains(queue<MyMessage_Base *> q, int x)
+{
+    while(!q.empty())
+    {
+        if(q.front()->getHeaderSeq_num() == x)
+            return true;
+        q.pop();
+    }
+    return false;
+}
+
+
+bool Node::calculateParity(MyMessage_Base*&msg)
+{
+        bitset<8> answer_parity (0);
+        string payload=msg->getPayload();
+        for(int i=0;i<payload.size();i++)
+        {
+            bitset<8> xbits (payload[i]);
+            answer_parity^=xbits;
+        }
+        bitset<8> seqnobits( msg->getHeaderSeq_num());
+        answer_parity^=seqnobits;
+
+        bitset<8> ackNackbits(msg->getAck_Nack_num());
+        answer_parity^=ackNackbits;
+
+        bitset<8> frameTypebits(msg->getFrame_type());
+        answer_parity^=frameTypebits;
+        if(!sender)
+        {
+            bitset<8> parityBits(msg->getTrailer_parity());
+            answer_parity^=parityBits;
+            //EV<<"i entered heree therfore i am receiver"<<endl;
+            if(answer_parity == 00000000)
+            {
+                return true;//correct even parity -> correct message
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+    //EV<<"HII  "<<(char)answer_parity.to_ulong()<<endl;
+    msg->setTrailer_parity((char)answer_parity.to_ulong());
+    return true;
+}
 
 //check ack
                 //protocol send fn

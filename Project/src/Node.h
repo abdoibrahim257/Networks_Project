@@ -15,9 +15,10 @@
 
 #ifndef __PROJECT_NODE_H_
 #define __PROJECT_NODE_H_
-
+#include "MyMessage_m.h"
 #include <omnetpp.h>
 #include <string>
+#include <queue>
 using namespace std;
 using namespace omnetpp;
 
@@ -34,6 +35,8 @@ class Node : public cSimpleModule
     string Framing(string msg);
     void SendMsg();
     bool ReadMsgFromFile(std::string &error, std::string &Msg);
+    bool isContains(queue<MyMessage_Base *> q, int x);
+    bool calculateParity(MyMessage_Base*&msg);
 };
 
 #endif

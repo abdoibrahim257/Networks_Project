@@ -24,7 +24,7 @@ simple Node
 {
     parameters:
         int WS;
-        int TO;
+        double TO;
         double PT;
         double TD;
         double ED;
