@@ -29,7 +29,7 @@ int Frame_expected;
 vector<MyMessage_Base *> buffer;
 int nBuffered;
 int i;
-int AceeptedDelay;
+int AcceptedDelay;
 
 void Node::initialize()
 {
@@ -64,8 +64,9 @@ void Node::handleMessage(cMessage *msg)
                     string FramedMsg = Framing(Msg);
                     msg3->setPayload(FramedMsg.c_str());
                     msg3->setHeaderSeq_num(Next_frame_to_send);
-                    //insert trailer
                     msg3->setFrame_type(0);
+                    //parity
+                    //insert trailer
 
                     nBuffered++;
                     EV<<"nBuffered: " << nBuffered<<endl;
