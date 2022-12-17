@@ -1,6 +1,6 @@
 ../out/clang-release/src/Coordinator.o: Coordinator.cc Coordinator.h \
-  C:/Users/amr23/Downloads/Compressed/omnetpp-5.6.2-src-windows_2/omnetpp-5.6.2/include\omnetpp.h
+  C:/OMNET/omnetpp-5.6.2/include\omnetpp.h
 
 Coordinator.h:
 
-C:/Users/amr23/Downloads/Compressed/omnetpp-5.6.2-src-windows_2/omnetpp-5.6.2/include\omnetpp.h:
+C:/OMNET/omnetpp-5.6.2/include\omnetpp.h:

@@ -1,7 +1,7 @@
 //Self Message Code
 
 // Start ----> Send First Message at Start time
-// Process ----> Insert Processing Time delay
+// Transmission ----> Insert Transmission delay Time delay
 
 #include "Node.h"
 #include "MyMessage_m.h"
@@ -29,22 +29,7 @@ int Frame_expected;
 vector<MyMessage_Base *> buffer;
 int nBuffered;
 int i;
-
-vector<char> Framing(string Msg)
-{
-    vector<char> Framed_Msg;
-    Framed_Msg.push_back('$');
-    for (int  i=0;i<Msg.size();i++)
-    {
-        if (Msg[i]== '/' || Msg[i]=='$')
-        {
-            Framed_Msg.push_back('/');
-        }
-        Framed_Msg.push_back(Msg[i]);
-    }
-    Framed_Msg.push_back('$');
-    return Framed_Msg;
-}
+int AceeptedDelay;
 
 void Node::initialize()
 {
@@ -54,6 +39,7 @@ void Node::initialize()
     Ack_expected = 0;
     Frame_expected = 0;
     nBuffered = 0;
+    AcceptedDelay = 3;
 }
 
 void Node::handleMessage(cMessage *msg)
@@ -66,31 +52,28 @@ void Node::handleMessage(cMessage *msg)
         string MuxCode(msg->getName());
         if(MuxCode == "Start")
         {
-
             //insert this clock on for loop until buffer is full or data is completed
             if(nBuffered < par("WS").intValue())
             {
-
                 t = this->ReadMsgFromFile(E, Msg);
                 if(t)
                 {
-                    MyMessage_Base* msg3 = new MyMessage_Base("Process");
+                    MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
+
                     //construct
-                    vector<char>Framed = Framing(Msg);
-                    for (int i=0;i<Framed.size();i++)
-                    {
-                        EV<<Framed[i]<<" ";
-                    }
-                    //send data
-                    msg3->setPayload(Msg.c_str());
+                    string FramedMsg = Framing(Msg);
+                    msg3->setPayload(FramedMsg.c_str());
+                    msg3->setHeaderSeq_num(Next_frame_to_send);
+                    //insert trailer
                     msg3->setFrame_type(0);
 
                     nBuffered++;
                     EV<<"nBuffered: " << nBuffered<<endl;
                     buffer.push_back(msg3);
 
-                    //send (msg3,"out");
+
                     scheduleAt(simTime() + par("PT").doubleValue(), msg3);
+                    inc(Next_frame_to_send, MaxSeqNum);
                     if(nBuffered < par("WS").intValue())
                     {
                         scheduleAt(simTime()+ par("PT").doubleValue(), new cMessage("Start"));
@@ -98,7 +81,6 @@ void Node::handleMessage(cMessage *msg)
                     //time delay part
                     Msg = "";
                     E = "";
-
                 }
                 else
                 {
@@ -106,10 +88,9 @@ void Node::handleMessage(cMessage *msg)
                 }
             }
         }
-        else if(MuxCode == "Process")
+        else if(MuxCode == "Transmission")
         {
             sendDelayed(msg, par("TD").doubleValue(), "out");
-
         }
     }
     else
@@ -133,13 +114,13 @@ void Node::handleMessage(cMessage *msg)
 
             if(line[1]=='1')
             {
-                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-                //myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
             }
             else
             {
-                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-                //myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
             }
 
             int startT=stol(startTime);
@@ -150,16 +131,7 @@ void Node::handleMessage(cMessage *msg)
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             if(mmsg->getFrame_type() == 1 || mmsg->getFrame_type() == 2)
             {
-                //check ack
-                //protocol send fn
-//                EV<<"Check timeout" << endl;
-//                MyMessage_Base* msg3 = new MyMessage_Base();
-//                E = "";
-//                Msg = "";
-//                t = this->ReadMsgFromFile(E, Msg);
-//                msg3->setPayload(Msg.c_str());
-//                msg3->setFrame_type(0);
-//                send (msg3,"out");
+
             }
             else if(mmsg->getFrame_type() == 0)
             {
@@ -167,9 +139,16 @@ void Node::handleMessage(cMessage *msg)
                 //check expected frame
                 //send ack/ nack
                 EV <<"Iam Rec" <<endl;
+                if(mmsg->getHeaderSeq_num() == Frame_expected)
+                {
+                    //check parity
+                    //if true send ack
+                    //inc frame expected
+                    //else Nack
+                    //dont inc frame expected
+                }
+
                 MyMessage_Base* msg3 = new MyMessage_Base();
-
-
 
 
                 msg3->setPayload("ACK");
@@ -223,46 +202,51 @@ void Node::SendMsg()
 
 }
 
+string Node::Framing(string Msg)
+{
+    vector<char> Framed_Msg;
+    Framed_Msg.push_back('$');
+    for (int  i=0;i<Msg.size();i++)
+    {
+        if (Msg[i]== '/' || Msg[i]=='$')
+        {
+            Framed_Msg.push_back('/');
+        }
+        Framed_Msg.push_back(Msg[i]);
+    }
+    Framed_Msg.push_back('$');
+
+    string framedStr="";
+    for (int i=0;i<Framed_Msg.size();i++)
+    {
+        framedStr += Framed_Msg[i];
+    }
+
+    return framedStr;
+}
+
+void Node::inc(int &seq_num, int Max)
+{
+    (seq_num <=Max) ? seq_num++ : seq_num = 0;
+}
+
+bool Node::Between(int seq_a, int seq_b, int seq_c)
+{
+    if(((seq_a <= seq_b) && (seq_b < seq_c)) || ((seq_c < seq_a) && (seq_a <= seq_b)) || ((seq_b < seq_c) && (seq_c < seq_a)))
+        return true;
+    else
+        return false;
+}
 
 
-//sender
-//string a(msg->getName());
-//if(a=="1")
-//{
-//    string line;
-//    if (myfile.is_open())
-//    {
-//        while(getline (myfile,line))
-//        {
-//            EV<<line<<endl;
-//            for(int i = 0; i < 5; i++)
-//            {
-//                error+=line[i];
-//            }
-//
-//            for(int i = 5; i < line.size(); i++)
-//            {
-//                Msg+=line[i];
-//            }
-//            EV << "Error Code: " << error<<endl;
-//            EV << "Message: " << Msg <<endl;
-//
-//            //check which error code-
-//            //perform framming here
-//            cMessage* msg2  = new cMessage(Msg.c_str());
-//            send (msg2,"out");
-//
-//            error = "";
-//            Msg = "";
-//
-//        }
-//    myfile.close();
-//}
-//else
-//{
-//
-//}
-//}
-
-
+//check ack
+                //protocol send fn
+//                EV<<"Check timeout" << endl;
+//                MyMessage_Base* msg3 = new MyMessage_Base();
+//                E = "";
+//                Msg = "";
+//                t = this->ReadMsgFromFile(E, Msg);
+//                msg3->setPayload(Msg.c_str());
+//                msg3->setFrame_type(0);
+//                send (msg3,"out");
 

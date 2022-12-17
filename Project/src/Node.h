@@ -18,6 +18,7 @@
 
 #include <omnetpp.h>
 #include <string>
+using namespace std;
 using namespace omnetpp;
 
 /**
@@ -28,6 +29,9 @@ class Node : public cSimpleModule
   protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
+    bool Between(int seq_a, int seq_b, int seq_b);
+    void inc(int &seq_num, int Max);
+    string Framing(string msg);
     void SendMsg();
     bool ReadMsgFromFile(std::string &error, std::string &Msg);
 };
