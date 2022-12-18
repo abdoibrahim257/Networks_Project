@@ -21,6 +21,7 @@ bool sender=false;
 ifstream myfile;
 string line2;
 string E, Msg;
+char node_id='0';    //node id '1' or '0'
 
 int MaxSeqNum;
 int Next_frame_to_send;
@@ -31,6 +32,13 @@ queue<MyMessage_Base *> buffer;
 int nBuffered;
 int i;
 int AcceptedDelay;
+ofstream sender_output;
+ofstream receiver_output;
+
+//  myfile.close();
+
+
+
 
 void Node::initialize()
 {
@@ -41,11 +49,21 @@ void Node::initialize()
     Frame_expected = 0;
     nBuffered = 0;
     AcceptedDelay = 3;
-    i;
+//    sender_output.open ("s_output.txt", std::ios_base::app);//output file for sender
+//    receiver_output.open ("r_output.txt", std::ios_base::app);//output file for receiver
+//    if(sender_output.is_open())
+//    {
+//        sender_output<<"hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii\n";
+//        EV<<"openedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"<<endl;
+//
+//    }
+
 }
 
 void Node::handleMessage(cMessage *msg)
 {
+    sender_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\sender_output.txt",fstream::out|fstream::app);//output file for sender
+    receiver_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\receiver_output.txt",fstream::out|fstream::app);//output file for receiver
     bool t = false;
     if(msg->isSelfMessage())
     {
@@ -60,6 +78,12 @@ void Node::handleMessage(cMessage *msg)
                 t = this->ReadMsgFromFile(E, Msg);
                 if(t)
                 {
+                    // write to file the sender time info
+                    if(sender_output.is_open())
+                    {
+                        sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] , Introducing channel error with code =["+E+"] .\n";
+                        EV<<"i will write in file now"<<endl;
+                    }
                     MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
 
                     //construct
@@ -90,6 +114,8 @@ void Node::handleMessage(cMessage *msg)
                     //time delay part
                     Msg = "";
                     E = "";
+                    sender_output.close();
+                    receiver_output.close();
                 }
                 else
                 {
@@ -99,6 +125,18 @@ void Node::handleMessage(cMessage *msg)
         }
         else if(MuxCode == "Transmission")
         {
+            MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
+            bitset<8> answer_parity (mmsg->getTrailer_parity());
+
+            //string nodeid(node_id);
+
+            string payyload(mmsg->getPayload());
+            string trailler(answer_parity.to_string());
+            if(sender_output.is_open())
+            {
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] for no modification, otherwise the modified bit number] ,  Lost [Yes/No], Duplicate [0 for none, 1 for the first version, 2 for the second version], Delay  [0 for no delay , otherwise the error delay interval]. .\n";
+                EV<<"i will write in file now1"<<endl;
+            }
             sendDelayed(msg, par("TD").doubleValue(), "out");
         }
         else if(MuxCode == "StopTimer")
@@ -113,6 +151,11 @@ void Node::handleMessage(cMessage *msg)
             if(Temp_mmsg->getHeaderSeq_num() == mmsg->getHeaderSeq_num())
             {
                 //timeout
+                if(sender_output.is_open())
+                {
+                    sender_output<<"Time out event at time ["+to_string(simTime().dbl())+"], at Node["+node_id+"] for frame with seq_num=["+to_string(mmsg->getHeaderSeq_num())+"]\n";
+                    EV<<"i will write in file now2"<<endl;
+                }
                 EV<<"Timed out message " << mmsg->getHeaderSeq_num() << endl;
                 Next_frame_to_send = Ack_expected;
                 for(i = 1 ; i <= nBuffered ; i++)
@@ -130,6 +173,23 @@ void Node::handleMessage(cMessage *msg)
                 }
                 EV <<"End of frame: " << Next_frame_to_send << endl;
             }
+        }
+        else if(MuxCode == "AckTransmission")
+        {
+            MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
+            if(receiver_output.is_open())
+            {
+                if(mmsg->getFrame_type())
+                {
+                    receiver_output<< " At time["+to_string(simTime().dbl())+"], Node["+node_id+"] Sending [ACK] with number ["+to_string(mmsg->getAck_Nack_num())+"] , loss [Yes/No ]\n";
+
+                }else{
+                    receiver_output<< " At time["+to_string(simTime().dbl())+"], Node["+node_id+"] Sending [NACK] with number ["+to_string(mmsg->getAck_Nack_num())+"] , loss [Yes/No ]\n";
+
+                }
+                EV<<"i will write in file receiver now3"<<endl;
+            }
+            sendDelayed(msg, par("TD").doubleValue(), "out");
         }
     }
     else
@@ -150,18 +210,18 @@ void Node::handleMessage(cMessage *msg)
                 startTime+=line[i];
             }
             EV<<"my start time= "<<stol(startTime)<<endl;
-
+            node_id=line[1];
             if(line[1]=='1')
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
-//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
             }
             else
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node0.txt");
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
-//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
+//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
             }
 
             int startT=stol(startTime);
@@ -170,20 +230,20 @@ void Node::handleMessage(cMessage *msg)
         else
         {
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
-            if(mmsg->getFrame_type() == 1)
+            if(mmsg->getFrame_type() == 1)//sender
             {
                 EV<< "Advance Window NOW " << endl;
                 EV<<"ACK expected before: " <<Ack_expected<<endl;
                 EV<<"Ack Received: "<<mmsg->getAck_Nack_num()<<endl;
                 EV<<"Next frame to send: "<< Next_frame_to_send<<endl;
                 if(Ack_expected ==  mmsg->getAck_Nack_num())
-                    {
-                        nBuffered--;
-                        if(!buffer.empty())
-                            buffer.pop();
-                        inc(Ack_expected, MaxSeqNum);
-                        EV<<"ACK expected after: " <<Ack_expected<<endl;
-                    }
+                {
+                    nBuffered--;
+                    if(!buffer.empty())
+                        buffer.pop();
+                    inc(Ack_expected, MaxSeqNum);
+                    EV<<"ACK expected after: " <<Ack_expected<<endl;
+                }
                 //advances the lower end and frees the buffer next is to send any message if there exist in file
                 EV << "Begining of the buffer: " << buffer.front()->getHeaderSeq_num() << endl;
 
@@ -192,9 +252,9 @@ void Node::handleMessage(cMessage *msg)
 
 
             }
-            else if(mmsg->getFrame_type() == 0)
+            else if(mmsg->getFrame_type() == 0)//receiver
             {
-                MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
+                MyMessage_Base* msg3 = new MyMessage_Base("AckTransmission");
                 //receiver
                 //check expected frame
                 //send ack/ nack
@@ -204,6 +264,8 @@ void Node::handleMessage(cMessage *msg)
                     bool correct = calculateParity(mmsg);
                     if(correct)
                     {
+
+
                         //send ack
                         msg3->setPayload("Ack");
                         msg3->setFrame_type(1);
@@ -364,6 +426,7 @@ MyMessage_Base * Node::copyMessage(MyMessage_Base*msg)
 
     return msg2be_Resent;
 }
+
 
 //check ack
                 //protocol send fn
