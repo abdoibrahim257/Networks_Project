@@ -35,9 +35,9 @@ int AcceptedDelay;
 void Node::initialize()
 {
     // TODO - Generated method body
-    MaxSeqNum = par("WS").intValue();
+    MaxSeqNum = par("WS").intValue()-1;
     Next_frame_to_send = 0;
-    Ack_expected = 0;
+    Ack_expected = 1;
     Frame_expected = 0;
     nBuffered = 0;
     AcceptedDelay = 3;
@@ -55,7 +55,7 @@ void Node::handleMessage(cMessage *msg)
         if(MuxCode == "Start")
         {
             //insert this clock on for loop until buffer is full or data is completed
-            if(nBuffered < MaxSeqNum)
+            if(nBuffered <= MaxSeqNum)
             {
                 t = this->ReadMsgFromFile(E, Msg);
                 if(t)
@@ -83,7 +83,7 @@ void Node::handleMessage(cMessage *msg)
                     //EV << "simTime: " << simTime();
                     scheduleAt(simTime() + par("PT").doubleValue() + par("TO").doubleValue(), msg4); //send message to myself and check if message is in the queue and timesout
 
-                    if(nBuffered < MaxSeqNum)
+                    if(nBuffered <= MaxSeqNum)
                     {
                         scheduleAt(simTime()+ par("PT").doubleValue(), new cMessage("Start"));
                     }
@@ -108,23 +108,20 @@ void Node::handleMessage(cMessage *msg)
             //else already sent and received the ack --->ignore
 
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
-            EV<<"Timed out message " << mmsg->getHeaderSeq_num() << endl;
-
             MyMessage_Base *Temp_mmsg = buffer.front();
-            EV << "First element in Buffer: " << Temp_mmsg->getHeaderSeq_num() << endl;
+            //EV << "First element in Buffer: " << Temp_mmsg->getHeaderSeq_num() << endl;
             if(Temp_mmsg->getHeaderSeq_num() == mmsg->getHeaderSeq_num())
             {
                 //timeout
+                EV<<"Timed out message " << mmsg->getHeaderSeq_num() << endl;
                 Next_frame_to_send = Ack_expected;
                 for(i = 1 ; i <= nBuffered ; i++)
                 {
 
                     MyMessage_Base* msg2be_Resent = new MyMessage_Base("Transmission");
-                    msg2be_Resent->setHeaderSeq_num(buffer.front()->getHeaderSeq_num());
-                    msg2be_Resent->setPayload(buffer.front()->getPayload());
-                    msg2be_Resent->setAck_Nack_num(buffer.front()->getAck_Nack_num());
-                    msg2be_Resent->setFrame_type(buffer.front()->getFrame_type());
-                    msg2be_Resent->setTrailer_parity(buffer.front()->getTrailer_parity());
+                    msg2be_Resent = copyMessage(buffer.front());
+
+
                     EV << "Retransmit: " << msg2be_Resent->getHeaderSeq_num() << endl;
                     buffer.push(buffer.front());
                     buffer.pop();
@@ -173,17 +170,27 @@ void Node::handleMessage(cMessage *msg)
         else
         {
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
-            if(mmsg->getFrame_type() == 1 || mmsg->getFrame_type() == 2)
+            if(mmsg->getFrame_type() == 1)
             {
                 EV<< "Advance Window NOW " << endl;
-                while(Between(Ack_expected, mmsg->getAck_Nack_num(), Next_frame_to_send))
+                EV<<"ACK expected before: " <<Ack_expected<<endl;
+                EV<<"Ack Received: "<<mmsg->getAck_Nack_num()<<endl;
+                EV<<"Next frame to send: "<< Next_frame_to_send<<endl;
+                if(Ack_expected ==  mmsg->getAck_Nack_num())
                     {
                         nBuffered--;
-                        buffer.pop();
+                        if(!buffer.empty())
+                            buffer.pop();
                         inc(Ack_expected, MaxSeqNum);
+                        EV<<"ACK expected after: " <<Ack_expected<<endl;
                     }
                 //advances the lower end and frees the buffer next is to send any message if there exist in file
                 EV << "Begining of the buffer: " << buffer.front()->getHeaderSeq_num() << endl;
+
+                //now i can send more messages
+                scheduleAt(simTime() ,new cMessage("Start"));
+
+
             }
             else if(mmsg->getFrame_type() == 0)
             {
@@ -284,7 +291,7 @@ string Node::Framing(string Msg)
 
 void Node::inc(int &seq_num, int Max)
 {
-    (seq_num == Max) ? seq_num = 0 : seq_num++;
+    (seq_num < Max) ? seq_num++ : seq_num = 0;
 }
 
 bool Node::Between(int seq_a, int seq_b, int seq_c)
@@ -344,6 +351,20 @@ bool Node::calculateParity(MyMessage_Base*&msg)
     return true;
 }
 
+MyMessage_Base * Node::copyMessage(MyMessage_Base*msg)
+{
+    //set name manually
+    MyMessage_Base* msg2be_Resent = new MyMessage_Base();
+
+    msg2be_Resent->setHeaderSeq_num(msg->getHeaderSeq_num());
+    msg2be_Resent->setPayload(msg->getPayload());
+    msg2be_Resent->setAck_Nack_num(msg->getAck_Nack_num());
+    msg2be_Resent->setFrame_type(msg->getFrame_type());
+    msg2be_Resent->setTrailer_parity(msg->getTrailer_parity());
+
+    return msg2be_Resent;
+}
+
 //check ack
                 //protocol send fn
 //                EV<<"Check timeout" << endl;
@@ -355,3 +376,10 @@ bool Node::calculateParity(MyMessage_Base*&msg)
 //                msg3->setFrame_type(0);
 //                send (msg3,"out");
 
+
+//retransmission copying message block
+//                    msg2be_Resent->setHeaderSeq_num(buffer.front()->getHeaderSeq_num());
+//                    msg2be_Resent->setPayload(buffer.front()->getPayload());
+//                    msg2be_Resent->setAck_Nack_num(buffer.front()->getAck_Nack_num());
+//                    msg2be_Resent->setFrame_type(buffer.front()->getFrame_type());
+//                    msg2be_Resent->setTrailer_parity(buffer.front()->getTrailer_parity());

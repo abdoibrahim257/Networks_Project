@@ -37,6 +37,7 @@ class Node : public cSimpleModule
     bool ReadMsgFromFile(std::string &error, std::string &Msg);
     bool isContains(queue<MyMessage_Base *> q, int x);
     bool calculateParity(MyMessage_Base*&msg);
+    MyMessage_Base * copyMessage(MyMessage_Base*msg);
 };
 
 #endif
