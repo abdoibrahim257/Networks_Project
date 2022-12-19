@@ -62,8 +62,7 @@ void Node::initialize()
 
 void Node::handleMessage(cMessage *msg)
 {
-    sender_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\sender_output.txt",fstream::out|fstream::app);//output file for sender
-    receiver_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\receiver_output.txt",fstream::out|fstream::app);//output file for receiver
+
     bool t = false;
     if(msg->isSelfMessage())
     {
@@ -81,7 +80,8 @@ void Node::handleMessage(cMessage *msg)
                     // write to file the sender time info
                     if(sender_output.is_open())
                     {
-                        sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] , Introducing channel error with code =["+E+"] .\n";
+                        sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] , Introducing channel error with code =["+ E+"]." << endl;
+                        sender_output << endl;
                         EV<<"i will write in file now"<<endl;
                     }
                     MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
@@ -132,9 +132,11 @@ void Node::handleMessage(cMessage *msg)
 
             string payyload(mmsg->getPayload());
             string trailler(answer_parity.to_string());
+            sender_output.open ("sender_output.txt", ios_base::out | ios_base::app);//output file for sender
             if(sender_output.is_open())
             {
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] for no modification, otherwise the modified bit number] ,  Lost [Yes/No], Duplicate [0 for none, 1 for the first version, 2 for the second version], Delay  [0 for no delay , otherwise the error delay interval]. .\n";
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] for no modification, otherwise the modified bit number] ,  Lost [Yes/No], Duplicate [0 for none, 1 for the first version, 2 for the second version], Delay  [0 for no delay , otherwise the error delay interval]. ."<<endl;
+                sender_output << endl;
                 EV<<"i will write in file now1"<<endl;
             }
             sendDelayed(msg, par("TD").doubleValue(), "out");
@@ -151,9 +153,11 @@ void Node::handleMessage(cMessage *msg)
             if(Temp_mmsg->getHeaderSeq_num() == mmsg->getHeaderSeq_num())
             {
                 //timeout
+                sender_output.open ("sender_output.txt", ios_base::out | ios_base::app);//output file for sender
                 if(sender_output.is_open())
                 {
-                    sender_output<<"Time out event at time ["+to_string(simTime().dbl())+"], at Node["+node_id+"] for frame with seq_num=["+to_string(mmsg->getHeaderSeq_num())+"]\n";
+                    sender_output<<"Time out event at time ["+to_string(simTime().dbl())+"], at Node["+node_id+"] for frame with seq_num=["+to_string(mmsg->getHeaderSeq_num())+"]"<<endl;
+                    sender_output << endl;
                     EV<<"i will write in file now2"<<endl;
                 }
                 EV<<"Timed out message " << mmsg->getHeaderSeq_num() << endl;
@@ -177,14 +181,17 @@ void Node::handleMessage(cMessage *msg)
         else if(MuxCode == "AckTransmission")
         {
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
+            receiver_output.open ("receiver_output.txt", ios_base::out | ios_base::app);//output file for sender
             if(receiver_output.is_open())
             {
+
                 if(mmsg->getFrame_type())
                 {
-                    receiver_output<< " At time["+to_string(simTime().dbl())+"], Node["+node_id+"] Sending [ACK] with number ["+to_string(mmsg->getAck_Nack_num())+"] , loss [Yes/No ]\n";
 
+                    receiver_output<< " At time[" + to_string(simTime().dbl())+ "], Node[" + node_id + "] Sending [ACK] with number ["+to_string(mmsg->getAck_Nack_num())+"] , loss [Yes/No ]"<<endl;
+                    receiver_output << endl;
                 }else{
-                    receiver_output<< " At time["+to_string(simTime().dbl())+"], Node["+node_id+"] Sending [NACK] with number ["+to_string(mmsg->getAck_Nack_num())+"] , loss [Yes/No ]\n";
+                    receiver_output<< " At time[" + to_string(simTime().dbl())+ "], Node[" + node_id + "] Sending [NACK] with number [" + to_string(mmsg->getAck_Nack_num()) + "] , loss [Yes/No ]"<<endl;
 
                 }
                 EV<<"i will write in file receiver now3"<<endl;
@@ -214,8 +221,14 @@ void Node::handleMessage(cMessage *msg)
             if(line[1]=='1')
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
-                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+
+//                sender_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\sender_output.txt",ios_base::app);//output file for sender
+//                receiver_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\receiver_output.txt",ios_base::app);//output file for receiver
+
+                sender_output.open ("sender_output.txt", ios_base::out | ios_base::app);//output file for sender
+                receiver_output.open ("receiver_output.txt", ios_base::out | ios_base::app);//output file for receiver
             }
             else
             {
