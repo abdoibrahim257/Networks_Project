@@ -243,7 +243,7 @@ void Node::handleMessage(cMessage *msg)
         else
         {
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
-            if(mmsg->getFrame_type() == 1)//sender
+            if(mmsg->getFrame_type() == 1)//sender if ack received if NACK ignore
             {
                 EV<< "Advance Window NOW " << endl;
                 EV<<"ACK expected before: " <<Ack_expected<<endl;
@@ -262,8 +262,6 @@ void Node::handleMessage(cMessage *msg)
 
                 //now i can send more messages
                 scheduleAt(simTime() ,new cMessage("Start"));
-
-
             }
             else if(mmsg->getFrame_type() == 0)//receiver
             {
@@ -277,8 +275,6 @@ void Node::handleMessage(cMessage *msg)
                     bool correct = calculateParity(mmsg);
                     if(correct)
                     {
-
-
                         //send ack
                         msg3->setPayload("Ack");
                         msg3->setFrame_type(1);
@@ -439,23 +435,3 @@ MyMessage_Base * Node::copyMessage(MyMessage_Base*msg)
 
     return msg2be_Resent;
 }
-
-
-//check ack
-                //protocol send fn
-//                EV<<"Check timeout" << endl;
-//                MyMessage_Base* msg3 = new MyMessage_Base();
-//                E = "";
-//                Msg = "";
-//                t = this->ReadMsgFromFile(E, Msg);
-//                msg3->setPayload(Msg.c_str());
-//                msg3->setFrame_type(0);
-//                send (msg3,"out");
-
-
-//retransmission copying message block
-//                    msg2be_Resent->setHeaderSeq_num(buffer.front()->getHeaderSeq_num());
-//                    msg2be_Resent->setPayload(buffer.front()->getPayload());
-//                    msg2be_Resent->setAck_Nack_num(buffer.front()->getAck_Nack_num());
-//                    msg2be_Resent->setFrame_type(buffer.front()->getFrame_type());
-//                    msg2be_Resent->setTrailer_parity(buffer.front()->getTrailer_parity());
