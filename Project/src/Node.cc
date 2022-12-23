@@ -21,7 +21,8 @@ Define_Module(Node);
 bool sender=false;
 ifstream myfile;
 string line2;
-string E, Msg;char node_id='0';    //node id '1' or '0'
+string E, Msg;
+char node_id='0';    //node id '1' or '0'
 
 int MaxSeqNum;
 int Next_frame_to_send;
@@ -74,13 +75,17 @@ void Node::handleMessage(cMessage *msg)
                     {
                         sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] , Introducing channel error with code =["+ E+"]." << endl;
                         sender_output << endl;
-                        EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] , Introducing channel error with code =["+ E+"]." << endl;
+                        EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] , Introducing channel error with code =["+ E +"]." << endl;
                         EV<<"i will write in file now"<<endl;
                     }
                     sender_output.close();
 //                    MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
-                    MyMessage_Base* msg3 = new MyMessage_Base("0000");
+                    MyMessage_Base* msg3 = new MyMessage_Base();
                     //construct
+                    if(E == "1000")
+                    {
+                        cout <<"HELOOOOOOOO niggaa" << 1 <<endl;
+                    }
                     string FramedMsg = Framing(Msg);
                     msg3->setPayload(FramedMsg.c_str());
                     msg3->setHeaderSeq_num(Next_frame_to_send);
@@ -871,21 +876,21 @@ void Node::handleMessage(cMessage *msg)
                 }
                 sender_output.close();
                 EV<<"Timed out message " << mmsg->getHeaderSeq_num() << endl;
-                Next_frame_to_send = Ack_expected;
+                Next_frame_to_send = Ack_expected - 1;
                 for(i = 1 ; i <= nBuffered ; i++)
                 {
 
-                    MyMessage_Base* msg2be_Resent = new MyMessage_Base("0000");
+                    MyMessage_Base* msg2be_Resent = new MyMessage_Base();
                     msg2be_Resent = copyMessage(buffer.front());
-
+                    msg2be_Resent->setName("0000");
 
                     EV << "Retransmit: " << msg2be_Resent->getHeaderSeq_num() << endl;
                     EV<<"buffuer.fornt "<<buffer.front()->getHeaderSeq_num()<<endl;
                     buffer.push(buffer.front());
                     buffer.pop();
                     EV<<"SIMTIME():"<<simTime()<<"   "<<i*par("PT").doubleValue()<<endl;
-                    sendDelayed(msg2be_Resent, par("TD").doubleValue()+ i*par("PT").doubleValue(), "out");
-                    //scheduleAt(simTime() + i*par("PT").doubleValue(), msg2be_Resent);
+//                    sendDelayed(msg2be_Resent, par("TD").doubleValue()+ i*par("PT").doubleValue(), "out");
+                    scheduleAt(simTime() + i*par("PT").doubleValue(), msg2be_Resent);
                     inc(Next_frame_to_send, MaxSeqNum);
                 }
                 EV<<"buffuer.fornt "<<buffer.front()->getHeaderSeq_num()<<endl;
@@ -896,7 +901,7 @@ void Node::handleMessage(cMessage *msg)
         {
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             receiver_output.open ("receiver_output.txt", ios_base::app);//output file for sender
-            double rand = uniform(0,1);//apply the random function to know weather i will loose ack or no
+            double rand = uniform(1,1);//apply the random function to know weather i will loose ack or no
 
             EV<<"rand= "<<rand<< " par(LP)= "<<endl;
             if(receiver_output.is_open())
@@ -962,8 +967,8 @@ void Node::handleMessage(cMessage *msg)
             if(line[1]=='1')
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
-                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
 
 //                sender_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\sender_output.txt",ios_base::app);//output file for sender
 //                receiver_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\receiver_output.txt",ios_base::app);//output file for receiver
@@ -974,8 +979,8 @@ void Node::handleMessage(cMessage *msg)
             else
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node0.txt");
-//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
-                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
             }
 
             int startT=stol(startTime);
@@ -1014,9 +1019,14 @@ void Node::handleMessage(cMessage *msg)
                 //send ack/ nack
 
                     EV <<"Iam Rec" <<endl;
+                    EV << "Seq num: " << mmsg->getHeaderSeq_num() << endl;
+                    EV << "Frame expected: " << Frame_expected << endl;
                     if(mmsg->getHeaderSeq_num() == Frame_expected)
                     {
+                        EV << "Seq num: " << mmsg->getHeaderSeq_num() << endl;
+                        EV << "Frame expected: " << Frame_expected << endl;
                         bool correct = checkParity(mmsg);
+                        EV << correct << endl;
                         if(correct)
                         {
                             //send ack as frame expected is correct
@@ -1025,10 +1035,6 @@ void Node::handleMessage(cMessage *msg)
                             inc(Frame_expected, MaxSeqNum);
                             msg3->setAck_Nack_num(Frame_expected);
                             scheduleAt(simTime() + par("PT").doubleValue(), msg3);
-                        }
-                        else
-                        {
-                            //here the message received is incorrect so keep silent
                         }
                     }
                     //                else
@@ -1216,3 +1222,5 @@ MyMessage_Base * Node::copyMessage(MyMessage_Base*msg)
 
     return msg2be_Resent;
 }
+
+
