@@ -6,3 +6,4 @@
 *.last-copts
 *.settings.xml
 *.txt
+out/
