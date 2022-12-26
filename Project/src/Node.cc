@@ -79,13 +79,10 @@ void Node::handleMessage(cMessage *msg)
                         EV<<"i will write in file now"<<endl;
                     }
                     sender_output.close();
-//                    MyMessage_Base* msg3 = new MyMessage_Base("Transmission");
-                    MyMessage_Base* msg3 = new MyMessage_Base();
-                    //construct
-                    if(E == "1000")
-                    {
-                        cout <<"HELOOOOOOOO niggaa" << 1 <<endl;
-                    }
+                    //send self message (self is sender) with Name--> the error code read from file
+                    //according to the error code (MUXCode) we will enter in the corresponding if statement
+                    MyMessage_Base* msg3 = new MyMessage_Base(E.c_str());
+
                     string FramedMsg = Framing(Msg);
                     msg3->setPayload(FramedMsg.c_str());
                     msg3->setHeaderSeq_num(Next_frame_to_send);
@@ -967,8 +964,8 @@ void Node::handleMessage(cMessage *msg)
             if(line[1]=='1')
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
-//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
 
 //                sender_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\sender_output.txt",ios_base::app);//output file for sender
 //                receiver_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\receiver_output.txt",ios_base::app);//output file for receiver
@@ -979,8 +976,8 @@ void Node::handleMessage(cMessage *msg)
             else
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node0.txt");
-                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
-//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
+//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
             }
 
             int startT=stol(startTime);
@@ -1061,7 +1058,7 @@ bool Node::ReadMsgFromFile(string &error2, string &Msg2)
        if(getline (myfile,line2))
        {
           EV<<line2<<endl;
-          for(int i = 0; i < 5; i++)
+          for(int i = 0; i < 4; i++)
           {
               error2+=line2[i];
           }

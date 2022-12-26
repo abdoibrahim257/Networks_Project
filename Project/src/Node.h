@@ -34,7 +34,7 @@ class Node : public cSimpleModule
     void inc(int &seq_num, int Max);
     string Framing(string msg);
     void SendMsg();
-    string ReadMsgFromFile(std::string &error, std::string &Msg);
+    bool ReadMsgFromFile(std::string &error, std::string &Msg);
     bool isContains(queue<MyMessage_Base *> q, int x);
     bool calculateParity(MyMessage_Base*&msg);
     bool checkParity(MyMessage_Base*&msg);
