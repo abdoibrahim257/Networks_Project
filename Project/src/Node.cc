@@ -122,7 +122,6 @@ void Node::handleMessage(cMessage *msg)
         else if(MuxCode == "0000") //===> Default / no errors <===
         {
             EV<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&              0000 RETRANSMIT"<<endl;
-            par("TD") = 1.0;
 
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             bitset<8> answer_parity (mmsg->getTrailer_parity());
@@ -144,8 +143,6 @@ void Node::handleMessage(cMessage *msg)
         }
         else if(MuxCode == "0001") //===> delay error <===
         {
-            par("TD") = 5.0;
-
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             bitset<8> answer_parity (mmsg->getTrailer_parity());
 
@@ -154,20 +151,19 @@ void Node::handleMessage(cMessage *msg)
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
             if(sender_output.is_open())
             {
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 sender_output << endl;
-                EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 EV<<"i will write in file now1"<<endl;
             }
             sender_output.close();
 
-            sendDelayed(msg, par("TD").doubleValue(), "out");
+            sendDelayed(msg, par("TD").doubleValue() + par("ED").doubleValue(), "out");
         }
         else if(MuxCode == "0010") //===> duplication error <===
         {
-            par("TD") = 1.0;
 
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             bitset<8> answer_parity (mmsg->getTrailer_parity());
@@ -200,7 +196,6 @@ void Node::handleMessage(cMessage *msg)
         }
         else if(MuxCode == "0011") //===> duplication error and transmission delay<===
         {
-            par("TD") = 5.0;
 
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             bitset<8> answer_parity (mmsg->getTrailer_parity());
@@ -216,21 +211,21 @@ void Node::handleMessage(cMessage *msg)
             if(sender_output.is_open())
             {
                 //original message with delay
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                 //||===> duplicate message with delay
-                sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 sender_output << endl;
 
-                EV<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
-                EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
+                EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 EV<<"i will write in file now1"<<endl;
             }
             sender_output.close();
 
-            sendDelayed(msg, par("TD").doubleValue(), "out");
-            sendDelayed(mmsg_Dup, par("TD").doubleValue() + par("DD").doubleValue(), "out");
+            sendDelayed(msg, par("TD").doubleValue()+par("ED").doubleValue(), "out");
+            sendDelayed(mmsg_Dup, par("TD").doubleValue()+par("ED").doubleValue() + par("DD").doubleValue(), "out");
         }
         else if(MuxCode == "0100") //===> Lost <===
         {
@@ -263,11 +258,11 @@ void Node::handleMessage(cMessage *msg)
             if(sender_output.is_open())
             {
                 //lost output
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 sender_output << endl;
 
-                EV <<  "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV <<  "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 EV<<"i will write in file now1"<<endl;
             }
@@ -300,7 +295,6 @@ void Node::handleMessage(cMessage *msg)
         }
         else if(MuxCode == "0111") //===> Lost, duplication and Delay <===
         {
-            par("TD") = 5.0;
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             bitset<8> answer_parity (mmsg->getTrailer_parity());
 
@@ -310,14 +304,14 @@ void Node::handleMessage(cMessage *msg)
             if(sender_output.is_open())
             {
                 //lost output
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                 //duplicated messsage lost
-                sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 sender_output << endl;
 
-                EV <<  "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
-                EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV <<  "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
+                EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified [-1] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                 EV<<"i will write in file now1"<<endl;
             }
             sender_output.close();
@@ -343,8 +337,6 @@ void Node::handleMessage(cMessage *msg)
                         payloadInBit.push_back(1);
                 }
             }
-
-            par("TD") = 1.0;
 
             int rand = int(uniform(0,1) * (payloadInBit.size()-1));
 
@@ -387,7 +379,6 @@ void Node::handleMessage(cMessage *msg)
         }
         else if(MuxCode == "1001") //===> Modification and Delay<===
         {
-            par("TD") = 5.0;
             EV<<"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++>>>>>> IM HERE Modification and Delay"<<endl;
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             bitset<8> answer_parity (mmsg->getTrailer_parity());
@@ -435,15 +426,15 @@ void Node::handleMessage(cMessage *msg)
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
             if(sender_output.is_open())
             {
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                 sender_output << endl;
-                EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 EV<<"i will write in file now1"<<endl;
             }
             sender_output.close();
 
-            sendDelayed(msg, par("TD").doubleValue(), "out");
+            sendDelayed(msg, par("TD").doubleValue()+par("ED").doubleValue(), "out");
         }
         else if(MuxCode == "1010") //===> Modification and Duplicate <===
         {
@@ -466,7 +457,6 @@ void Node::handleMessage(cMessage *msg)
                 }
             }
 
-            par("TD") = 1.0;
 
             int rand = int(uniform(0,1) * (payloadInBit.size()-1));
 
@@ -539,8 +529,6 @@ void Node::handleMessage(cMessage *msg)
                 }
             }
 
-            par("TD") = 5.0;
-
             int rand = int(uniform(0,1) * (payloadInBit.size()-1));
 
             //insert the error payload to message
@@ -576,21 +564,21 @@ void Node::handleMessage(cMessage *msg)
             if(sender_output.is_open())
             {
                 //original messasge
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                 //||===> duplicate message
-                sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 sender_output << endl;
 
-                EV<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
-                EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
+                EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [No], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 EV<<"i will write in file now1"<<endl;
             }
             sender_output.close();
 
-            sendDelayed(msg, par("TD").doubleValue(), "out");
-            sendDelayed(mmsg_Dup, par("TD").doubleValue()+par("DD").doubleValue(), "out");
+            sendDelayed(msg, par("TD").doubleValue()+par("ED").doubleValue(), "out");
+            sendDelayed(mmsg_Dup, par("TD").doubleValue()+par("ED").doubleValue()+par("DD").doubleValue(), "out");
 
         }
         else if(MuxCode == "1100") //===> Modification, Loss<===
@@ -703,9 +691,9 @@ void Node::handleMessage(cMessage *msg)
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
             if(sender_output.is_open())
             {
-                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                 sender_output << endl;
-                EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                EV << "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+temp+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [0], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                 EV<<"i will write in file now1"<<endl;
             }
@@ -734,7 +722,6 @@ void Node::handleMessage(cMessage *msg)
                 }
             }
 
-            par("TD") = 1.0;
 
             int rand = int(uniform(0,1) * (payloadInBit.size()-1));
 
@@ -803,7 +790,6 @@ void Node::handleMessage(cMessage *msg)
                         }
                     }
 
-                    par("TD") = 5.0;
 
                     int rand = int(uniform(0,1) * (payloadInBit.size()-1));
 
@@ -835,14 +821,14 @@ void Node::handleMessage(cMessage *msg)
                     if(sender_output.is_open())
                     {
                         //original messasge
-                        sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                        sender_output<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
                         //||===> duplicate message
-                        sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                        sender_output<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                         sender_output << endl;
 
-                        EV<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
-                        EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("TD").doubleValue()) + "]. ."<<endl;
+                        EV<< "At time ["+to_string(simTime().dbl())+"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [1], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
+                        EV<< "At time ["+to_string(simTime().dbl() + par("DD").doubleValue()) +"], Node["+node_id+"] [sent] frame with seq_num=["+ to_string(mmsg->getHeaderSeq_num())+"] and payload=["+payyload+"] and trailer=["+trailler+"] , Modified ["+to_string(rand)+"] ,  Lost [Yes], Duplicate [2], Delay  [" + to_string(par("ED").doubleValue()) + "]. ."<<endl;
 
                         EV<<"i will write in file now1"<<endl;
                     }
@@ -964,8 +950,8 @@ void Node::handleMessage(cMessage *msg)
             if(line[1]=='1')
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
-                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
 
 //                sender_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\sender_output.txt",ios_base::app);//output file for sender
 //                receiver_output.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\receiver_output.txt",ios_base::app);//output file for receiver
@@ -976,8 +962,8 @@ void Node::handleMessage(cMessage *msg)
             else
             {
 //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node0.txt");
-//                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
-                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
+                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+//                myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
             }
 
             int startT=stol(startTime);
