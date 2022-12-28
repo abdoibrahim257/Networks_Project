@@ -14,8 +14,8 @@ void Coordinator::initialize()
 {
       string line;
 //      ifstream myfile ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\coordinator.txt");
-//      ifstream myfile ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\coordinator.txt");
-      ifstream myfile ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\coordinator.txt");
+      ifstream myfile ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\coordinator.txt");
+//      ifstream myfile ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\coordinator.txt");
       if (myfile.is_open())
       {
         while(getline (myfile,line))

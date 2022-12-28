@@ -999,14 +999,14 @@ void Node::handleMessage(cMessage *msg)
                 if(line[1]=='1')
                 {
     //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node1.txt");
-    //                myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
-                    myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
+                    myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node1.txt");
+//                    myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node1.txt");
                 }
                 else
                 {
     //                myfile.open ("D:\\Uni\\Senior 1\\Semester 1\\Networks\\Project_test\\node0.txt");
-//                    myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
-                    myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
+                    myfile.open ("D:\\GAM3A\\4- Senior 01\\Computer networks\\github\\Networks_Project\\Project\\node0.txt");
+//                    myfile.open ("D:\\CUFE\\Fall 2022\\Networks\\project\\Networks_Project\\Project\\node0.txt");
                 }
 
                 int startT=stol(startTime);
@@ -1050,7 +1050,6 @@ void Node::handleMessage(cMessage *msg)
                 //receiver
                 //check expected frame
                 //send ack/ nack
-
                     EV <<"Iam Rec" <<endl;
                     EV << "Seq num: " << mmsg->getHeaderSeq_num() << endl;
                     EV << "Frame expected: " << Frame_expected << endl;
@@ -1070,16 +1069,13 @@ void Node::handleMessage(cMessage *msg)
                             scheduleAt(simTime() + par("PT").doubleValue(), msg3);
                         }
                     }
-                    //                else
-                    //                {
-                    //                    //send Nack because this is not the expected frame number
-                    //                    msg3->setPayload("Nack");
-                    //                    msg3->setFrame_type(2);
-                    //                    msg3->setAck_Nack_num(Frame_expected);
-                    //                    scheduleAt(simTime() + par("PT").doubleValue(), msg3);
-                    //                }
-
-
+                    else
+                    {
+                        //send Nack because this is not the expected frame number
+                        msg3->setPayload("Nack");
+                        msg3->setFrame_type(2);
+                        msg3->setAck_Nack_num(Frame_expected);
+                    }
             }
         }
     }
@@ -1191,21 +1187,7 @@ bool Node::calculateParity(MyMessage_Base*&msg)
 
         bitset<8> frameTypebits(msg->getFrame_type());
         answer_parity^=frameTypebits;
-        if(!sender)
-        {
-            bitset<8> parityBits(msg->getTrailer_parity());
-            answer_parity^=parityBits;
-            //EV<<"i entered heree therfore i am receiver"<<endl;
-            if(answer_parity == 00000000)
-            {
-                return true;//correct even parity -> correct message
-            }
-            else
-            {
-                return false;
-            }
 
-        }
   //  EV<<"HII i am sender in calc parity  "<<(char)answer_parity.to_ulong()<<endl;
     msg->setTrailer_parity((char)answer_parity.to_ulong());
     return true;
