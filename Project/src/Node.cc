@@ -29,6 +29,7 @@ int Next_frame_to_send;
 int Ack_expected;
 int Frame_expected;
 queue<MyMessage_Base *> buffer;//outstanding frames (elements of window size)
+queue<MyMessage_Base *> correctBackupBuffer;
 queue<MyMessage_Base *> TimeOutBuffer;//buffer to hold pointers on messages with scheduled time out to be able to cancel the timeout event when received ack correctly
 int nBuffered;
 int i;
@@ -99,6 +100,10 @@ void Node::handleMessage(cMessage *msg)
                     nBuffered++;
                     EV<<"nBuffered: " << nBuffered<<endl;
                     buffer.push(msg3);
+
+                    MyMessage_Base* msg6 = new MyMessage_Base(E.c_str());
+                    msg6 = copyMessage(msg3);
+                    correctBackupBuffer.push(msg6);
                     inc(Next_frame_to_send, MaxSeqNum);
 
 
@@ -381,7 +386,7 @@ void Node::handleMessage(cMessage *msg)
                 bitset<8> chr2(chr);
                 temp += (char)chr2.to_ulong();
             }
-
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
 
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -439,6 +444,7 @@ void Node::handleMessage(cMessage *msg)
                 bitset<8> chr2(chr);
                 temp += (char)chr2.to_ulong();
             }
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
             if(sender_output.is_open())
@@ -503,6 +509,7 @@ void Node::handleMessage(cMessage *msg)
             MyMessage_Base* mmsg_Dup = new MyMessage_Base("0000");
             mmsg_Dup = copyMessage(mmsg);
 
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
 
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -576,6 +583,7 @@ void Node::handleMessage(cMessage *msg)
             MyMessage_Base* mmsg_Dup = new MyMessage_Base("0000");
             mmsg_Dup = copyMessage(mmsg);
 
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
 
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -642,7 +650,7 @@ void Node::handleMessage(cMessage *msg)
                 bitset<8> chr2(chr);
                 temp += (char)chr2.to_ulong();
             }
-
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
 
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -701,6 +709,7 @@ void Node::handleMessage(cMessage *msg)
                 bitset<8> chr2(chr);
                 temp += (char)chr2.to_ulong();
             }
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
 
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -760,7 +769,7 @@ void Node::handleMessage(cMessage *msg)
                 bitset<8> chr2(chr);
                 temp += (char)chr2.to_ulong();
             }
-
+            mmsg->setPayload(temp.c_str());
             string trailler(answer_parity.to_string());
 
             sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -827,7 +836,7 @@ void Node::handleMessage(cMessage *msg)
                         bitset<8> chr2(chr);
                         temp += (char)chr2.to_ulong();
                     }
-
+                    mmsg->setPayload(temp.c_str());
                     string trailler(answer_parity.to_string());
 
                     sender_output.open ("sender_output.txt", ios_base::app);//output file for sender
@@ -879,13 +888,18 @@ void Node::handleMessage(cMessage *msg)
                 Next_frame_to_send = Ack_expected - 1;
                 //first: retransmit message(timed out message) correctly without any error
                 MyMessage_Base* msg2be_Resent = new MyMessage_Base();
+
                 //force error code to be 0000 because timeout happened
+                correctBackupBuffer.front()->setErrorCode("0000");
                 buffer.front()->setErrorCode("0000");
-                msg2be_Resent = copyMessage(buffer.front());
+                msg2be_Resent = copyMessage(correctBackupBuffer.front());
                 msg2be_Resent->setName("0000");
-                buffer.push(buffer.front());
+                buffer.push(correctBackupBuffer.front()); //resala bayza
                 buffer.pop();
+                correctBackupBuffer.push(correctBackupBuffer.front()); //resala el sa7
+                correctBackupBuffer.pop();
                 scheduleAt(simTime() + par("PT").doubleValue(), msg2be_Resent);//send to self at Muxcode 0000
+
                 TimeOutBuffer.pop();//we should pop the time out buffer
                 //we dont need cancel event for this message as it already timed out
                 //time out self message (new time out event on same message)
@@ -898,12 +912,18 @@ void Node::handleMessage(cMessage *msg)
                 for(i = 2 ; i <= nBuffered ; i++)
                 {
                     MyMessage_Base* msg2be_Resent = new MyMessage_Base();
-                    msg2be_Resent = copyMessage(buffer.front());
+                    msg2be_Resent = copyMessage(correctBackupBuffer.front());
                     msg2be_Resent->setName(buffer.front()->getErrorCode());//we want retransmit the rest of the buffer each one with its error code
+
                     EV << "Retransmit: " << msg2be_Resent->getHeaderSeq_num() << endl;
                     EV<<"buffuer.fornt "<<buffer.front()->getHeaderSeq_num()<<endl;
-                    buffer.push(buffer.front());
+
+                    buffer.push(correctBackupBuffer.front());
                     buffer.pop();
+
+                    correctBackupBuffer.push(correctBackupBuffer.front());
+                    correctBackupBuffer.pop();
+
                     EV<<"SIMTIME():"<<simTime()<<"   "<<i*par("PT").doubleValue()<<endl;
 //                    sendDelayed(msg2be_Resent, par("TD").doubleValue()+ i*par("PT").doubleValue(), "out");
                     scheduleAt(simTime() + i*par("PT").doubleValue(), msg2be_Resent);//this will go to any mux code specified in msg2be_Resent->getName()
@@ -1032,6 +1052,7 @@ void Node::handleMessage(cMessage *msg)
                         buffer.pop();
                         cancelEvent(TimeOutBuffer.front());
                         TimeOutBuffer.pop();
+                        correctBackupBuffer.pop();
                     }
 
                     inc(Ack_expected, MaxSeqNum);
