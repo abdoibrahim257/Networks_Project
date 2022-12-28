@@ -38,6 +38,7 @@ class Node : public cSimpleModule
     bool isContains(queue<MyMessage_Base *> q, int x);
     bool calculateParity(MyMessage_Base*&msg);
     bool checkParity(MyMessage_Base*&msg);
+    char getMyName();
     MyMessage_Base * copyMessage(MyMessage_Base*msg);
 };
 
