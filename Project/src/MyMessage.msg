@@ -25,5 +25,6 @@ packet MyMessage {
     char Trailer_parity;
     int Frame_type;
     int Ack_Nack_num;
+    string ErrorCode;
     
 }

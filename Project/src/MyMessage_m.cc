@@ -209,6 +209,7 @@ void MyMessage_Base::copy(const MyMessage_Base& other)
     this->Trailer_parity = other.Trailer_parity;
     this->Frame_type = other.Frame_type;
     this->Ack_Nack_num = other.Ack_Nack_num;
+    this->ErrorCode = other.ErrorCode;
 }
 
 void MyMessage_Base::parsimPack(omnetpp::cCommBuffer *b) const
@@ -219,6 +220,7 @@ void MyMessage_Base::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->Trailer_parity);
     doParsimPacking(b,this->Frame_type);
     doParsimPacking(b,this->Ack_Nack_num);
+    doParsimPacking(b,this->ErrorCode);
 }
 
 void MyMessage_Base::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -229,6 +231,7 @@ void MyMessage_Base::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->Trailer_parity);
     doParsimUnpacking(b,this->Frame_type);
     doParsimUnpacking(b,this->Ack_Nack_num);
+    doParsimUnpacking(b,this->ErrorCode);
 }
 
 int MyMessage_Base::getHeaderSeq_num() const
@@ -279,6 +282,16 @@ int MyMessage_Base::getAck_Nack_num() const
 void MyMessage_Base::setAck_Nack_num(int Ack_Nack_num)
 {
     this->Ack_Nack_num = Ack_Nack_num;
+}
+
+const char * MyMessage_Base::getErrorCode() const
+{
+    return this->ErrorCode.c_str();
+}
+
+void MyMessage_Base::setErrorCode(const char * ErrorCode)
+{
+    this->ErrorCode = ErrorCode;
 }
 
 class MyMessageDescriptor : public omnetpp::cClassDescriptor
@@ -347,7 +360,7 @@ const char *MyMessageDescriptor::getProperty(const char *propertyname) const
 int MyMessageDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 5+basedesc->getFieldCount() : 5;
+    return basedesc ? 6+basedesc->getFieldCount() : 6;
 }
 
 unsigned int MyMessageDescriptor::getFieldTypeFlags(int field) const
@@ -364,8 +377,9 @@ unsigned int MyMessageDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<5) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<6) ? fieldTypeFlags[field] : 0;
 }
 
 const char *MyMessageDescriptor::getFieldName(int field) const
@@ -382,8 +396,9 @@ const char *MyMessageDescriptor::getFieldName(int field) const
         "Trailer_parity",
         "Frame_type",
         "Ack_Nack_num",
+        "ErrorCode",
     };
-    return (field>=0 && field<5) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<6) ? fieldNames[field] : nullptr;
 }
 
 int MyMessageDescriptor::findField(const char *fieldName) const
@@ -395,6 +410,7 @@ int MyMessageDescriptor::findField(const char *fieldName) const
     if (fieldName[0]=='T' && strcmp(fieldName, "Trailer_parity")==0) return base+2;
     if (fieldName[0]=='F' && strcmp(fieldName, "Frame_type")==0) return base+3;
     if (fieldName[0]=='A' && strcmp(fieldName, "Ack_Nack_num")==0) return base+4;
+    if (fieldName[0]=='E' && strcmp(fieldName, "ErrorCode")==0) return base+5;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -412,8 +428,9 @@ const char *MyMessageDescriptor::getFieldTypeString(int field) const
         "char",
         "int",
         "int",
+        "string",
     };
-    return (field>=0 && field<5) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<6) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **MyMessageDescriptor::getFieldPropertyNames(int field) const
@@ -485,6 +502,7 @@ std::string MyMessageDescriptor::getFieldValueAsString(void *object, int field, 
         case 2: return long2string(pp->getTrailer_parity());
         case 3: return long2string(pp->getFrame_type());
         case 4: return long2string(pp->getAck_Nack_num());
+        case 5: return oppstring2string(pp->getErrorCode());
         default: return "";
     }
 }
@@ -504,6 +522,7 @@ bool MyMessageDescriptor::setFieldValueAsString(void *object, int field, int i, 
         case 2: pp->setTrailer_parity(string2long(value)); return true;
         case 3: pp->setFrame_type(string2long(value)); return true;
         case 4: pp->setAck_Nack_num(string2long(value)); return true;
+        case 5: pp->setErrorCode((value)); return true;
         default: return false;
     }
 }

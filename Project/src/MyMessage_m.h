@@ -30,6 +30,7 @@
  *     char Trailer_parity;
  *     int Frame_type;
  *     int Ack_Nack_num;
+ *     string ErrorCode;
  * 
  * }
  * </pre>
@@ -66,9 +67,12 @@ class MyMessage_Base : public ::omnetpp::cPacket
     char Trailer_parity;
     int Frame_type;
     int Ack_Nack_num;
+    ::omnetpp::opp_string ErrorCode;
 
   private:
     void copy(const MyMessage_Base& other);
+
+
 
   public:
     virtual ~MyMessage_Base();
@@ -95,6 +99,8 @@ class MyMessage_Base : public ::omnetpp::cPacket
     virtual void setFrame_type(int Frame_type);
     virtual int getAck_Nack_num() const;
     virtual void setAck_Nack_num(int Ack_Nack_num);
+    virtual const char * getErrorCode() const;
+    virtual void setErrorCode(const char * ErrorCode);
 };
 
 

@@ -93,6 +93,7 @@ void Node::handleMessage(cMessage *msg)
                     msg3->setHeaderSeq_num(Next_frame_to_send);
                     msg3->setAck_Nack_num(Ack_expected);
                     msg3->setFrame_type(0);
+                    msg3->setErrorCode(E.c_str());
                     this->calculateParity(msg3);
 
                     nBuffered++;
@@ -878,25 +879,45 @@ void Node::handleMessage(cMessage *msg)
                 Next_frame_to_send = Ack_expected - 1;
                 //first: retransmit message(timed out message) correctly without any error
                 MyMessage_Base* msg2be_Resent = new MyMessage_Base();
+                //force error code to be 0000 because timeout happened
+                buffer.front()->setErrorCode("0000");
                 msg2be_Resent = copyMessage(buffer.front());
                 msg2be_Resent->setName("0000");
                 buffer.push(buffer.front());
                 buffer.pop();
-                for(i = 1 ; i < nBuffered ; i++)
-                {
+                scheduleAt(simTime() + par("PT").doubleValue(), msg2be_Resent);//send to self at Muxcode 0000
+                TimeOutBuffer.pop();//we should pop the time out buffer
+                //we dont need cancel event for this message as it already timed out
+                //time out self message (new time out event on same message)
+                MyMessage_Base* msg4TimeOutBuffer = new MyMessage_Base("StopTimer");
+                msg4TimeOutBuffer->setHeaderSeq_num(msg2be_Resent->getHeaderSeq_num());
+                TimeOutBuffer.push(msg4TimeOutBuffer);
+                //schedule time out self message
+                scheduleAt(simTime() + par("PT").doubleValue() + par("TO").doubleValue(), msg4TimeOutBuffer); //send message to myself and check if message is in the queue and timesout
 
+                for(i = 2 ; i <= nBuffered ; i++)
+                {
                     MyMessage_Base* msg2be_Resent = new MyMessage_Base();
                     msg2be_Resent = copyMessage(buffer.front());
-                    msg2be_Resent->setName(E.c);
-
+                    msg2be_Resent->setName(buffer.front()->getErrorCode());//we want retransmit the rest of the buffer each one with its error code
                     EV << "Retransmit: " << msg2be_Resent->getHeaderSeq_num() << endl;
                     EV<<"buffuer.fornt "<<buffer.front()->getHeaderSeq_num()<<endl;
                     buffer.push(buffer.front());
                     buffer.pop();
                     EV<<"SIMTIME():"<<simTime()<<"   "<<i*par("PT").doubleValue()<<endl;
 //                    sendDelayed(msg2be_Resent, par("TD").doubleValue()+ i*par("PT").doubleValue(), "out");
-                    scheduleAt(simTime() + i*par("PT").doubleValue(), msg2be_Resent);
-                    inc(Next_frame_to_send, MaxSeqNum);
+                    scheduleAt(simTime() + i*par("PT").doubleValue(), msg2be_Resent);//this will go to any mux code specified in msg2be_Resent->getName()
+                    //part of creating new time out events and cancel all old time out events
+                    //we need to cancel event for this message as it didn't timed out
+                    cancelEvent(TimeOutBuffer.front());
+                    TimeOutBuffer.pop();//we should pop the time out buffer
+                    //time out self message (new time out event on same message)
+                    MyMessage_Base* msg4TimeOutBuffer = new MyMessage_Base("StopTimer");
+                    msg4TimeOutBuffer->setHeaderSeq_num(msg2be_Resent->getHeaderSeq_num());
+                    TimeOutBuffer.push(msg4TimeOutBuffer);
+                    //schedule time out self message
+                    scheduleAt(simTime() + i*par("PT").doubleValue() + par("TO").doubleValue(), msg4TimeOutBuffer); //send message to myself and check if message is in the queue and timesout
+                   // inc(Next_frame_to_send, MaxSeqNum);
                 }
                 EV<<"buffuer.fornt "<<buffer.front()->getHeaderSeq_num()<<endl;
                 EV <<"End of frame: " << Next_frame_to_send << endl;
@@ -1231,7 +1252,7 @@ MyMessage_Base * Node::copyMessage(MyMessage_Base*msg)
     msg2be_Resent->setAck_Nack_num(msg->getAck_Nack_num());
     msg2be_Resent->setFrame_type(msg->getFrame_type());
     msg2be_Resent->setTrailer_parity(msg->getTrailer_parity());
-
+    msg2be_Resent->setErrorCode(msg->getErrorCode());
     return msg2be_Resent;
 }
 
