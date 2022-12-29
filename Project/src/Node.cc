@@ -947,7 +947,7 @@ void Node::handleMessage(cMessage *msg)
         {
             MyMessage_Base *mmsg = check_and_cast<MyMessage_Base *>(msg);
             receiver_output.open ("receiver_output.txt", ios_base::app);//output file for sender
-            double rand = uniform(0,1);//apply the random function to know weather i will loose ack or no
+            double rand = 1.0-uniform(0,1);//apply the random function to know weather i will loose ack or no
             string tempNodeName=getName();
             node_id=tempNodeName[4];
             EV<<"rand= "<<rand<< " par(LP)= "<<endl;
@@ -1088,6 +1088,20 @@ void Node::handleMessage(cMessage *msg)
                             inc(Frame_expected, MaxSeqNum);
                             msg3->setAck_Nack_num(Frame_expected);
                             scheduleAt(simTime() + par("PT").doubleValue(), msg3);
+                        }
+                        else
+                        {
+                            string tempNodeName=getName();
+                            node_id=tempNodeName[4];
+                            receiver_output.open ("receiver_output.txt", ios_base::app);//output file for sender
+                            if(receiver_output.is_open())
+                            {
+                                receiver_output<< " At time[" + to_string(simTime().dbl()+ par("PT").doubleValue())+ "], Node[" + node_id + "] Sending [NACK] with number [" + to_string(mmsg->getHeaderSeq_num()) + "] , loss [No]"<<endl;
+                                EV << " At time[" + to_string(simTime().dbl()+ par("PT").doubleValue())+ "], Node[" + node_id + "] Sending [NACK] with number [" + to_string(mmsg->getHeaderSeq_num()) + "] , loss [No]"<<endl;
+
+                            }
+                            receiver_output.close();
+
                         }
                     }
                     else
